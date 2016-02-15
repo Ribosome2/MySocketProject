@@ -1,0 +1,13 @@
+package ChatApp;
+
+message UserReq{
+	required int32 id=2;
+}
+
+message UserResp{
+	required string name=1;
+	required string chat=2;
+	required int32 id=3;
+	optional string email=4;
+	
+}
