@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using ChatApp;
+using UnityEngine;
 using System.Collections;
 
 public class ChatTest : MonoBehaviour
@@ -17,11 +18,18 @@ public class ChatTest : MonoBehaviour
 	void Start ()
 	{
 	    ProtoMapper.Initilize();
-	    ProtoPacketQueueManager.instance.AddHandleListener(typeof (Chat_S2C), OnChatResp);
-	    ProtoPacketQueueManager.instance.AddHandleListener(typeof (GetUserInfo_S2C), OnGetPlayerInfoResp);
+	    ProtoPacketQueueManager.instance.AddHandleListener<ChatApp.UserResp>(OnChatResp);
 	    EncodeAndDecodeTest();
 
 	}
+
+    private void OnChatResp(object o)
+    {
+        ChatApp.UserResp resp = o as ChatApp.UserResp;
+        Debug.Log("resp"+resp.chat);
+    }
+
+  
 	
 	// Update is called once per frame
 	void Update () {
@@ -40,7 +48,7 @@ public class ChatTest : MonoBehaviour
         chatText = GUILayout.TextField(chatText);
         if (GUILayout.Button("Send"))
         {
-            SendChat();
+            SendGetInfo();
         }
 
 
@@ -65,21 +73,13 @@ public class ChatTest : MonoBehaviour
 
     }
 
-    void SendChat()
-    {
-        Chat_C2S chat = new Chat_C2S();
-        chat.userId = userId;
-        chat.text = chatText;
-        SocketController.instance.SendProto(chat);
-    }
+   
 
     void SendGetInfo()
     {
-        GetUserInfo_C2S getInfo = new GetUserInfo_C2S();
-        getInfo.name = name;
-        getInfo.age = age;
-        getInfo.userId = userId;
-        SocketController.instance.SendProto(getInfo);
+        ChatApp.UserReq req=new UserReq();
+        req.id = 12;
+       CommandController.Send(req);
     }
 
     void OnChatResp(ProtoBase_S2C data)

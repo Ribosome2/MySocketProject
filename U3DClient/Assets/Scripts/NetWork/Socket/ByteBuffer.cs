@@ -1,4 +1,5 @@
 ﻿using System;
+using ProtoBuf.Meta;
 using UnityEngine;
 using System.Collections;
 
@@ -19,8 +20,11 @@ public class ByteBuffer
     
     /// <summary>
     /// 协议头的长度，这几个字节我们用来标记每个协议的总字节长度
+    /// 现在就用 1  2  4  这几个字节 
     /// </summary>
-    public readonly int Header_Length= 4;
+    public const int Header_Length= 2;
+
+    public const int ProtoCodeLength = 2;
     public  Byte[] protobuffBytes=new byte[1024*1024];
 
    
@@ -32,13 +36,46 @@ public class ByteBuffer
     {
         get
         {
-            byte[] lenthBytes=new byte[4];
-            Array.Copy(protobuffBytes, lenthBytes, lenthBytes.Length);
-            int bodyLength= BitConverter.ToInt32(lenthBytes, 0);
-            return bodyLength;
+            if (Header_Length == 1)
+            {
+                return protobuffBytes[0];
+            }else if (Header_Length == 2)
+            {
+                return   BitConverter.ToInt16(protobuffBytes, 0);
+            }else if (Header_Length == 4)
+            {
+                return BitConverter.ToInt32(protobuffBytes, 0);
+            }
+            else
+            {
+                Debug.LogError("不支持的头长度"+Header_Length);
+                return 0;
+            }
         }
     }
-
+    public int ProtoCode
+    {
+        get
+        {
+            if (ProtoCodeLength == 1)
+            {
+                return protobuffBytes[Header_Length];
+            }
+            else if (ProtoCodeLength == 2)
+            {
+                return BitConverter.ToInt16(protobuffBytes, Header_Length);
+            }
+            else if (ProtoCodeLength == 4)
+            {
+                return BitConverter.ToInt32(protobuffBytes, Header_Length);
+            }
+            else
+            {
+                Debug.LogError("不支持的协议号 头长度" + ProtoCodeLength);
+                return 0;
+            }
+        }
+    }
 
 
     /// <summary>
@@ -46,46 +83,33 @@ public class ByteBuffer
     /// </summary>
     public void CreatePacketFromBuffer()
     {
-        byte[] packetBytes = new byte[BodyLength];
-        //从缓存里获取属于这个协议的内容
-        Array.Copy(protobuffBytes,Header_Length, packetBytes,0, packetBytes.Length);
-        byte[] protoCodeBytes = new byte[4];
-        Array.Copy(packetBytes, 0, protoCodeBytes, 0, protoCodeBytes.Length); //协议的前面四位为协议号
-        int protoCode = BitConverter.ToInt32(protoCodeBytes, 0);
-
-        ProtoBase_S2C decoder = ProtoMapper.GetProtoDecoder(protoCode);
-        if (decoder!= null)
+        try
         {
-            decoder.Decode(packetBytes);
-            ProtoPacketQueueManager.instance.AddPacket(decoder);
-            //用队列在帧更新的时候处理协议，是因为有可能是在多线程下通信，而有些操作是只能在主线程执行
+            int bodyLen = BodyLength;
+           
+            int protoCode = ProtoCode;
+            object decoder = ProtoMapper.GetProtoDecoder(protoCode);
+            if (decoder != null)
+            {
+                byte[] dataBytes = new byte[bodyLen - ProtoCodeLength]; //协议体等于总的协议体长度减去协议号字节
+                Array.Copy(protobuffBytes, Header_Length+ProtoCodeLength, dataBytes, 0, dataBytes.Length);
+                Debug.Log("Content :"+SocketController.ByteArrayToStr(dataBytes));
+                System.IO.MemoryStream stream_output = new System.IO.MemoryStream(dataBytes);
+
+                RuntimeTypeModel.Default.Deserialize(stream_output, decoder, decoder.GetType());
+                
+                ProtoPacketQueueManager.AddPacket(decoder);
+                //用队列在帧更新的时候处理协议，是因为有可能是在多线程下通信，而有些操作是只能在主线程执行
+            }
         }
+        catch (System.Exception ex)
+        {
+            Debug.LogError("协议包创建出错："+ex.Message+ex.StackTrace);
+        }
+       
 
     }
-    /// <summary>
-    /// 在刚好接收完一个完整的协议的时候调用，构造一个完整的协议包(这个函数用protoBuf来序列化数据）
-    /// </summary>
-    public void CreatePacketFromBuffer2()
-    {
-        byte[] packetBytes = new byte[BodyLength];
-        //从缓存里获取属于这个协议的内容
-        Array.Copy(protobuffBytes, Header_Length, packetBytes, 0, packetBytes.Length);
-        byte[] protoCodeBytes = new byte[4];
-        Array.Copy(packetBytes, 0, protoCodeBytes, 0, protoCodeBytes.Length); //协议的前面四位为协议号
-        int protoCode = BitConverter.ToInt32(protoCodeBytes, 0);
-
-        Type decoder = ProtoMapper.GetProtobufDecodeType(protoCode);
-        if (decoder != null)
-        {
-            System.IO.MemoryStream stream_output = new System.IO.MemoryStream(packetBytes);
-
-            //？？？？？？？？？？？？？？ 这里这个泛型的语法怎么写？ 还没搞明白
-            //decoder = ProtoBuf.Serializer.Deserialize<decoder.GetType()>(stream_output);
-           // ProtoPacketQueueManager.instance.AddPacket(decoder);
-            //用队列在帧更新的时候处理协议，是因为有可能是在多线程下通信，而有些操作是只能在主线程执行
-        }
-
-    }
+    
     
 
 }

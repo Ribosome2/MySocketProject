@@ -76,15 +76,9 @@ public class SocketController
             mSocket.EndConnect(ar);
             mSocket.SendTimeout = Send_Time_Out;
             mSocket.ReceiveTimeout = RevTimeOut;
-           
-            //*********************************************************************************************************
-            //这里最大的疑惑就是怎么解决第二和第三个参数（offset, size）怎么决定
-            //难道可以size直接写缓存区大小没什么问题吧？
-            //offset呢，是每次收到信息的时候自己把新的偏移值算出来？，每次接收到的字节数都能判断出来？
-            //开始接收消息 这个函数的意思应该是获得制定长度的数据之后才会返回回调的，所以我们这里先获取协议头（包含协议长度信息）
-            mSocket.BeginReceive(ByteBuffer.Instance.protobuffBytes, 0, ByteBuffer.Instance.Header_Length,
+        
+            mSocket.BeginReceive(ByteBuffer.Instance.protobuffBytes, 0, ByteBuffer.Header_Length,
                 SocketFlags.None, new System.AsyncCallback(OnReceiveHeader), serverSocket);
-            //*************************************************************************************************************
         }
         catch (Exception ex)
         {
@@ -124,7 +118,7 @@ public class SocketController
             {
                 //到这里我们已经得到了协议头，已经可以知道协议长度了，开始接收正式的协议内容
                 //这里我们从协议头之后开始接收协议头指示的协议体长度
-                mSocket.BeginReceive(ByteBuffer.Instance.protobuffBytes, ByteBuffer.Instance.Header_Length, ByteBuffer.Instance.BodyLength,
+                mSocket.BeginReceive(ByteBuffer.Instance.protobuffBytes, ByteBuffer.Header_Length, ByteBuffer.Instance.BodyLength,
                 SocketFlags.None, new System.AsyncCallback(OnReceiveBody), serverSocket);
             }
         }
@@ -158,7 +152,7 @@ public class SocketController
 
 
                 //接收完之后继续接收下一个协议头，循环：  协议头---->协议体---->协议头
-                mSocket.BeginReceive(ByteBuffer.Instance.protobuffBytes, 0,ByteBuffer.Instance.Header_Length,
+                mSocket.BeginReceive(ByteBuffer.Instance.protobuffBytes, 0,ByteBuffer.Header_Length,
                     SocketFlags.None, new System.AsyncCallback(OnReceiveHeader), serverSocket);
             }
         }
@@ -177,28 +171,21 @@ public class SocketController
         UnityEngine.Debug.LogError ("Connection lost");
     }
 
-    public void SendProto(ProtoBase_C2S protoData)
-    {
-        List<byte> protoBytes = protoData.Encode(); //获得协议体的字节
 
-        byte[] headerBytes = BitConverter.GetBytes(protoBytes.Count); //获取协议头来标记协议长度
-        Debug.Log("header value  "+ BitConverter.ToInt32(headerBytes,0));
-        Debug.Log("Header bytes " + ByteArrayToStr(headerBytes));
-        //在协议最前面写入协议的长度
-        protoBytes.InsertRange(0, headerBytes);
-        byte[] finalBytes = protoBytes.ToArray();
-        Debug.Log("after header added");
+
+    public  void SendBytes(byte[] finalBytes)
+    {
         PrintBytes(finalBytes);
         int totalBytes = finalBytes.Length;
         int sendBytes = 0;
-        while (sendBytes <totalBytes)
+        while (sendBytes < totalBytes)
         {
             int sendCount = mSocket.Send(finalBytes, sendBytes, totalBytes - sendBytes, SocketFlags.None);
             sendBytes += sendCount;
         }
     }
 
-    string  ByteArrayToStr(byte[] byteArray)
+   public static  string  ByteArrayToStr(byte[] byteArray)
     {
         string str = "Byte count:  " + byteArray.Length+"   content: ";
 
@@ -209,7 +196,7 @@ public class SocketController
         return str;
     }
 
-    void PrintBytes(Byte[] byteArray)
+   public static  void PrintBytes(Byte[] byteArray)
     {
         string str = "Byte count:  " + byteArray.Length+"  content : ";
         

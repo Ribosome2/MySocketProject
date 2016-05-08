@@ -1,1 +1,0 @@
-protogen -i:chatapp.proto -o:chatapp.cs

@@ -29,11 +29,11 @@ public class ProtoPacketQueueManager : MonoBehaviour
         }
     }
 
-    private List<ProtoBase_S2C> mListProtoPacket = new List<ProtoBase_S2C>();
+    private static   List<object> mListProtoPacket = new List<object>();
 
    
 
-    public delegate void OnHanldePacketData(ProtoBase_S2C data);
+    public delegate void OnHanldePacketData(object data);
 
     public List<PacketHandle> mListPacketDataHandle = new List<PacketHandle>();
 
@@ -48,14 +48,14 @@ public class ProtoPacketQueueManager : MonoBehaviour
     {
         while (mListProtoPacket.Count > 0)
         {
-            ProtoBase_S2C protoData = mListProtoPacket[0];
+            object protoData = mListProtoPacket[0];
             HandlePacket(protoData);
             mListProtoPacket.RemoveAt(0);
         }
     }
 
 
-    public void AddPacket(ProtoBase_S2C packet)
+    public static void AddPacket(object packet)
     {
         mListProtoPacket.Add(packet);
     }
@@ -65,7 +65,7 @@ public class ProtoPacketQueueManager : MonoBehaviour
     /// 处理协议包
     /// </summary>
     /// <param name="resp"></param>
-    void HandlePacket(ProtoBase_S2C resp)
+    void HandlePacket( object resp)
     {
         //触发所有侦听了这个协议的函数
         for (int i = 0; i < mListPacketDataHandle.Count; i++)
@@ -87,6 +87,11 @@ public class ProtoPacketQueueManager : MonoBehaviour
         handle.packetType = packetType;
         handle.handleFuntion = handleFunction;
         mListPacketDataHandle.Add(handle);
+    }
+
+    public void AddHandleListener<T>( OnHanldePacketData handleFunction)
+    {
+        AddHandleListener(typeof(T),handleFunction);
     }
 
     public void RemoveHandleListener(OnHanldePacketData handleFunction)

@@ -6,10 +6,9 @@ using Object = UnityEngine.Object;
 /// <summary>
 /// 请求协议基类
 /// </summary>
-public class  ProtoBufBaseReq
+public abstract class  ProtoBufBaseReq
 {
-    public Type data; //这里要限制一个泛型的话要怎么写
-
+    public static  int code=0;
 }
 
 /// <summary>
