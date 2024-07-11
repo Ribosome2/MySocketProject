@@ -1,9 +1,0 @@
-E:\U3DProjects\networkProjects\ProtubufTest\Server\ServerUsingProtobuf\GameServer\GameServer\bin\Debug\GameServer.exe.config
-E:\U3DProjects\networkProjects\ProtubufTest\Server\ServerUsingProtobuf\GameServer\GameServer\bin\Debug\GameServer.exe
-E:\U3DProjects\networkProjects\ProtubufTest\Server\ServerUsingProtobuf\GameServer\GameServer\bin\Debug\GameServer.pdb
-E:\U3DProjects\networkProjects\ProtubufTest\Server\ServerUsingProtobuf\GameServer\GameServer\obj\Debug\GameServer.csprojResolveAssemblyReference.cache
-E:\U3DProjects\networkProjects\ProtubufTest\Server\ServerUsingProtobuf\GameServer\GameServer\obj\Debug\GameServer.exe
-E:\U3DProjects\networkProjects\ProtubufTest\Server\ServerUsingProtobuf\GameServer\GameServer\obj\Debug\GameServer.pdb
-E:\U3DProjects\networkProjects\ProtubufTest\GameServer\GameServer\bin\Debug\GameServer.exe.config
-E:\U3DProjects\networkProjects\ProtubufTest\GameServer\GameServer\obj\Debug\GameServer.exe
-E:\U3DProjects\networkProjects\ProtubufTest\GameServer\GameServer\obj\Debug\GameServer.pdb
